@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Balloon Burst Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: lightblue;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #balloon {
+            position: absolute;
+            width: 50px;
+            height: 70px;
+            background-image: url('balloon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: width 0.1s, height 0.1s, top 0.1s, left 0.1s;
+        }
+        #pump {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 180px; /* Even larger size */
+            height: 180px; /* Even larger size */
+            background-image: url('pump.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            cursor: pointer;
+        }
+        #burst-effect {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-image: url('burst.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            display: none;
+        }
+        #score {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            font-size: 20px;
+            color: black;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: black;
+            display: none;
+        }
+        #title {
+          position: absolute;
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 24px;
+          color: black;
+          z-index: 10;
+        }
+        #inflateText {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          padding: 10px;
+          font-size: 16px;
+          color: black;
+          z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="balloon"></div>
+        <div id="pump"></div>
+        <div id="burst-effect"></div>
+        <div id="score">Score: 0</div>
+        <div id="message"></div>
+        <div id="title">Balloon Burst Game</div>
+        <div id="inflateText">Click and Hold to inflate</div>
+    </div>
+
+    <script>
+        const balloon = document.getElementById('balloon');
+        const pump = document.getElementById('pump');
+        const burstEffect = document.getElementById('burst-effect');
+        const scoreDisplay = document.getElementById('score');
+        const messageDisplay = document.getElementById('message');
+        let balloonSize = 50;
+        let balloonFlying = false;
+        let balloonX = window.innerWidth / 2;
+        let balloonY = window.innerHeight - 100;
+        let balloonSpeedX = 0;
+        let balloonSpeedY = -2;
+        let pumpPressed = false;
+        let inflationInterval;
+        let score = 0;
+        let gameActive = true;
+
+        balloon.style.left = balloonX + 'px';
+        balloon.style.top = balloonY + 'px';
+
+        pump.addEventListener('mousedown', () => {
+            if (gameActive) {
+                pumpPressed = true;
+                inflationInterval = setInterval(inflateBalloon, 50);
+            }
+        });
+
+        pump.addEventListener('mouseup', () => {
+            pumpPressed = false;
+            clearInterval(inflationInterval);
+        });
+
+        pump.addEventListener('mouseleave', () => {
+            pumpPressed = false;
+            clearInterval(inflationInterval);
+        });
+
+        function inflateBalloon() {
+            if (pumpPressed) {
+                balloonSize += 2;
+                balloon.style.width = balloonSize + 'px';
+                balloon.style.height = (balloonSize * 1.4) + 'px';
+
+                if (balloonSize > 150) {
+                    balloonFlying = true;
+                    balloonSpeedX = (Math.random() - 0.5) * 3;
+                    clearInterval(inflationInterval);
+                }
+            }
+        }
+
+        function updateBalloonPosition() {
+            if (balloonFlying && gameActive) {
+                balloonX += balloonSpeedX;
+                balloonY += balloonSpeedY;
+
+                if (balloonX < 0 || balloonX > window.innerWidth - balloonSize) {
+                    balloonSpeedX *= -1;
+                }
+                if (balloonY < 0) {
+                    balloonY = window.innerHeight - (balloonSize * 1.4);
+                }
+
+                balloon.style.left = balloonX + 'px';
+                balloon.style.top = balloonY + 'px';
+            }
+            requestAnimationFrame(updateBalloonPosition);
+        }
+
+        requestAnimationFrame(updateBalloonPosition);
+
+        balloon.addEventListener('click', () => {
+            if (balloonFlying && gameActive) {
+                burstEffect.style.left = balloonX - 25 + 'px';
+                burstEffect.style.top = balloonY - 25 + 'px';
+                burstEffect.style.display = 'block';
+
+                balloon.style.display = 'none';
+                balloonFlying = false;
+                score++;
+                scoreDisplay.textContent = `Score: ${score}`;
+
+                setTimeout(() => {
+                    burstEffect.style.display = 'none';
+                    balloon.style.display = 'block';
+                    balloonSize = 50;
+                    balloon.style.width = balloonSize + 'px';
+                    balloon.style.height = (balloonSize * 1.4) + 'px';
+                    balloonX = window.innerWidth / 2;
+                    balloonY = window.innerHeight - 100;
+                    balloon.style.left = balloonX + 'px';
+                    balloon.style.top = balloonY + 'px';
+
+                }, 1000);
+            }
+        });
+
+        function endGame() {
+            gameActive = false;
+            messageDisplay.textContent = `Game Over! Your Score: ${score}`;
+            messageDisplay.style.display = 'block';
+        }
+
+        setTimeout(endGame, 60000);
+    </script>
+</body>
+</html>
